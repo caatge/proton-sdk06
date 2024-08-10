@@ -124,6 +124,8 @@ DWORD __stdcall HookSteamAPIDelayed(LPVOID _) {
 }
 
 char __fastcall Load(void* this, void* edx, void* f1, void* f2) {
+	if (!GetModuleHandle(L"lsteamclient.dll")) return 0x1;
+	
 	MH_Initialize();
 	void* vstdlib = GetModuleHandle(L"vstdlib.dll");
 	void* tier0 = GetModuleHandle(L"tier0.dll");
