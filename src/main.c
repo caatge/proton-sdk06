@@ -60,6 +60,36 @@ int __fastcall winISteamUser_SteamUser005_InitiateGameConnection(
 	return args.ret;
 }
 
+//proton 8
+
+typedef size_t(__fastcall* initiategameconnection_proton8_t)(
+	void* steamusr,
+	void* edx,
+	void* pBlob,
+	size_t cbMaxBlob,
+	CSteamID steamID,
+	CGameID* nGameAppID,
+	unsigned int unIPServer,
+	uint32_t usPortServer,
+	uint32_t secure,
+	uint32_t pleasedontouchmystackoriwillexplodeotherwise); // stack smash prevention agency called
+
+initiategameconnection_proton8_t initiategameconnection_proton8;
+
+int __fastcall winISteamUser_SteamUser005_InitiateGameConnection2(
+	void* steamusr,
+	void* edx,
+	void* pBlob,
+	size_t cbMaxBlob,
+	CSteamID steamID,
+	CGameID nGameAppID,
+	unsigned int unIPServer,
+	uint32_t usPortServer,
+	uint32_t secure)
+{
+	return initiategameconnection_proton8(steamusr, edx, pBlob, cbMaxBlob, steamID, &nGameAppID, unIPServer, usPortServer, secure, 0);
+}
+
 DWORD __stdcall HookSteamAPIDelayed(LPVOID _) {
 
 	static void* trampoline_not_used;
@@ -85,6 +115,14 @@ DWORD __stdcall HookSteamAPIDelayed(LPVOID _) {
 	Msg("SteamUser vtable: %p\n", vtable_SteamUser);
 
 	Msg("InitiateGameConnection: %p\n", vtable_SteamUser[17]);
+
+	const uint8_t pattern_proton8[] = {0x58, 0x51, 0x50, 0xE9};
+	if (strncmp((const char*)vtable_SteamUser[17], pattern_proton8, sizeof(pattern_proton8)) == 0) {
+		Msg("-------\n\nProton 8 detected!\n\n-------\n\n");
+		MH_CreateHook(vtable_SteamUser[17], &winISteamUser_SteamUser005_InitiateGameConnection2, (LPVOID*)&initiategameconnection_proton8);
+		MH_EnableHook(MH_ALL_HOOKS);
+		return 1;
+	}
 
 
 	// steamclient_call
@@ -118,7 +156,7 @@ DWORD __stdcall HookSteamAPIDelayed(LPVOID _) {
 
 	steamclient_call = (steamclient_call_t)resolved;
 
-	MH_CreateHook(vtable_SteamUser[17], &winISteamUser_SteamUser005_InitiateGameConnection, &trampoline_not_used);
+	MH_CreateHook(vtable_SteamUser[17], &winISteamUser_SteamUser005_InitiateGameConnection, (LPVOID*)&trampoline_not_used);
 	MH_EnableHook(MH_ALL_HOOKS);
 	return 1;
 }
