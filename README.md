@@ -1,4 +1,4 @@
-# This works only on Proton 9.0 and higher
+# ~~This works only on Proton 9.0 and higher~~
 This is a small server plugin which hooks some function in lsteamclient.dll and makes InitiateGameConnection work. Please note that this is hacky as hell and might break in the future.
 
 ## How to install/use
